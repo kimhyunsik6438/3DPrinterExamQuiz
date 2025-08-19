@@ -1,0 +1,379 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>3D Printer Operator (필기) — 60문항 × 2세트 모의고사</title>
+<style>
+  :root{
+    --bg:#0b1220;--panel:#0f172a;--border:#1f2a44;--text:#e5e7eb;--muted:#94a3b8;
+    --accent:#22d3ee;--ok:#34d399;--warn:#f59e0b;--bad:#fb7185;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1000px 600px at 10% -20%, rgba(34,211,238,.12), transparent),var(--bg);
+       color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR","Apple SD Gothic Neo","맑은 고딕",sans-serif;line-height:1.55}
+  header{max-width:1100px;margin:0 auto;padding:28px 20px 12px}
+  h1{margin:0 0 8px;font-size:clamp(26px,3.2vw,40px);letter-spacing:-.3px}
+  .sub{color:var(--muted)}
+  .toolbar{position:sticky;top:0;z-index:5;background:rgba(11,18,32,.8);backdrop-filter:blur(8px);
+           border-bottom:1px solid #172038}
+  .toolbar .inner{display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:1100px;margin:0 auto;padding:10px 20px}
+  .btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-weight:800;color:#0b1220;background:var(--accent);cursor:pointer}
+  .btn.alt{background:#334155;color:#e5e7eb;font-weight:700;border:1px solid #475569}
+  .btn.ghost{background:transparent;color:var(--text);border:1px dashed #3b475f}
+  .btn.small{padding:6px 10px;border-radius:10px}
+  .status{margin-left:auto;font-size:14px;color:var(--muted)}
+  .wrap{max-width:1100px;margin:12px auto;padding:0 20px 40px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+  .card{background:linear-gradient(180deg,rgba(16,24,39,.95),rgba(16,24,39,.85));border:1px solid var(--border);
+        border-radius:16px;padding:14px 12px}
+  .qhead{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .no{font-weight:900;color:var(--accent)}
+  .topic{margin-left:auto;color:#0b1220;background:rgba(34,211,238,.9);font-size:12px;padding:2px 8px;border-radius:999px;font-weight:800}
+  .question{font-weight:800;margin:6px 0 8px}
+  .choices{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+  .choices li{border:1px solid #223051;border-radius:12px;padding:8px;display:flex;gap:10px;align-items:flex-start;background:rgba(2,6,23,.6)}
+  .choices input{transform:translateY(2px)}
+  .explain{display:none;margin-top:8px;border:1px dashed #334155;padding:8px 10px;border-radius:10px;color:var(--muted)}
+  .explain .ans{color:var(--warn);font-weight:900}
+  .wrong .choices li.selected{border-color:var(--bad);background:rgba(255,0,0,.06)}
+  .correct .choices li.selected{border-color:var(--ok);background:rgba(0,255,180,.06)}
+  .footer{margin-top:18px;color:var(--muted);font-size:13px}
+  .pill{font-size:12px;color:#0b1220;background:#a7f3d0;padding:2px 8px;border-radius:999px;font-weight:800}
+  .panel{background:rgba(15,23,42,.8);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin:14px 0}
+  .hidden{display:none!important}
+  .score{font-weight:900}
+  .pass{color:var(--ok)} .fail{color:var(--bad)}
+  .info{color:var(--muted);font-size:13px}
+  .tag{font-size:11px;color:#0b1220;background:#f0abfc;padding:2px 8px;border-radius:999px;font-weight:800}
+  .headrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .select{padding:8px 10px;border-radius:10px;background:#0b1220;border:1px solid #334155;color:var(--text)}
+  .note{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>3D프린터운용기능사 필기 대비 — 60문항 × 2세트</h1>
+  <p class="sub">기출 경향을 바탕으로 재구성한 <b>객관식 60문항</b>을 풉니다. <span class="pill">60점 이상</span>이면 합격으로 표시됩니다.<br/>정답 공개 없이 <b>오답만 재응시</b>가 가능하며, 세트A 완료 후 <b>세트B(다른 60문항)</b>로 이어집니다.</p>
+</header>
+
+<div class="toolbar">
+  <div class="inner">
+    <select id="setPicker" class="select">
+      <option value="A">세트 A (60문항)</option>
+      <option value="B" disabled>세트 B (60문항, A 완료 후 열림)</option>
+    </select>
+    <button class="btn small" id="btnScore">채점하기</button>
+    <button class="btn alt small" id="btnRetryWrong" disabled>오답만 다시 풀기</button>
+    <button class="btn ghost small" id="btnReset">전체 초기화</button>
+    <span class="status" id="status">진행: 0 / 60</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="result" class="panel hidden"></div>
+  <div class="panel info">
+    <div class="headrow">
+      <span class="tag">사용 안내</span>
+      <span class="note">모든 문항에 답한 뒤 <b>채점하기</b>를 누르면 점수와 합격/불합격이 표시됩니다(60점 기준). 정답은 즉시 공개하지 않으며, <b>오답만 다시 풀기</b>로 재도전할 수 있습니다.</span>
+    </div>
+  </div>
+
+  <div id="grid" class="grid"></div>
+
+  <div class="footer">
+    <p>※ 본 자료는 공개된 기출의 출제 <b>영역과 핵심 개념</b>을 바탕으로 <u>새로 작성</u>한 변형 연습문항입니다. 실제 회차와 보기 구성은 다를 수 있습니다.</p>
+  </div>
+</div>
+
+<script>
+// ============ 데이터 ============
+// 각 항목: {no, topic, q, choices:[...], answer:0~3}
+const setA = [
+  // 1~20: 이전 요약 변형에서 확장
+  {no:1,topic:"공정",q:"액체 수지를 광원으로 굳혀 적층하는 방식에서 중합을 시작하는 핵심 첨가제는?",choices:["광억제제","단량체","중간체","광개시제"],answer:3},
+  {no:2,topic:"모델링/파일",q:"NURBS 모델링에 대한 설명으로 옳지 않은 것은?",choices:["치수 정밀도가 높다","STEP으로 교환이 용이하다","기본 단위가 삼각형 메쉬다","수학적 곡면으로 정의된다"],answer:2},
+  {no:3,topic:"모델링/파일",q:"다음 중 오류 검출/수정 프로그램이 아닌 것은?",choices:["Netfabb","Meshmixer","AMF","MeshLab"],answer:2},
+  {no:4,topic:"모델링/파일",q:"STL 설명으로 옳은 것은?",choices:["매니폴드는 오류 상태","오픈메시는 틈으로 출력오류 유발","곡면을 정확한 수식으로 저장","텍스처 좌표 포함"],answer:1},
+  {no:5,topic:"공정",q:"얇은 시트를 절단·접착해 적층하는 기법은?",choices:["FDM","SLA","SLS","LOM"],answer:3},
+  {no:6,topic:"품질",q:"FDM에서 압출 모터 토크 부족 시 흔한 현상은?",choices:["과다 토출","노즐 온도 급등","노즐-베드 과소 간격","언더익스트루전"],answer:3},
+  {no:7,topic:"슬라이서",q:"표면 결을 부드럽게 하려면 가장 직접적인 설정은?",choices:["레이어 높이 감소","인필 밀도 증가","이동 속도 증가","리트랙션 거리 감소"],answer:0},
+  {no:8,topic:"슬라이서",q:"브릿지 처짐을 줄이려는 대응으로 적합하지 않은 것은?",choices:["냉각 강화","속도 감속","노즐 온도 대폭 상승","브릿지 전용 파라미터"],answer:2},
+  {no:9,topic:"G/M",q:"원점 복귀(Home)를 수행하는 명령은?",choices:["G0","G1","G28","G4"],answer:2},
+  {no:10,topic:"G/M",q:"단위를 밀리미터로 지정하는 G코드는?",choices:["G20","G21","G90","G91"],answer:1},
+  {no:11,topic:"G/M",q:"노즐/베드 온도 설정 대표 M코드는?",choices:["M104/M140","M84/M600","M106/M107","M221/M900"],answer:0},
+  {no:12,topic:"재료",q:"PLA와 ABS 비교로 옳은 것은?",choices:["PLA가 더 내열","ABS는 수축이 커 워프 주의","PLA 냄새가 더 독함","ABS 지지대 제거가 항상 쉬움"],answer:1},
+  {no:13,topic:"공정",q:"지지대가 불필요한 경우가 많고 나일론에 적합한 공정은?",choices:["FDM","SLA","SLS","바인더제팅"],answer:2},
+  {no:14,topic:"안전",q:"SLA 레진 출력물의 필수 후처리는?",choices:["물세척만","UV 후경화","샌딩 뒤 도장","아세톤 베이퍼"],answer:1},
+  {no:15,topic:"모델링/파일",q:"치수 교환에 적합한 형식은?",choices:["STL","OBJ","STEP/IGES","PLY"],answer:2},
+  {no:16,topic:"슬라이서",q:"출력 강도 향상을 위해 먼저 조정할 항목은?",choices:["탑/바텀 수","벽 두께/퍼리미터 수","리트랙션 속도","가속도"],answer:1},
+  {no:17,topic:"품질",q:"Z축 레이어 밴딩의 흔한 원인은?",choices:["레벨링 과다","Z리드스크류 편심/프레임 문제","노즐 지름 과소","인필 과다"],answer:1},
+  {no:18,topic:"G/M",q:"베드 메시 자동보정에 쓰이는 명령은?",choices:["G29","M84","M221","G92"],answer:0},
+  {no:19,topic:"슬라이서",q:"줄 늘어짐(Stringing) 대응 1순위는?",choices:["인필","리트랙션","벽 두께","탑 레이어"],answer:1},
+  {no:20,topic:"품질",q:"첫 레이어 부착 불량 시 우선 확인할 것은?",choices:["인필·속도","팬·노즐직경","베드 레벨·Z오프셋","벽두께·탑레이어"],answer:2},
+  // 21~60 새 문항
+  {no:21,topic:"하드웨어",q:"노즐 지름을 0.4→0.6mm로 바꾸면 일반적으로?",choices:["해상도↑·시간↑","해상도↓·시간↓","해상도↑·시간↓","영향 없음"],answer:1},
+  {no:22,topic:"하드웨어",q:"히트크립(Heat Creep)의 주요 원인으로 옳은 것은?",choices:["베드 온도 낮음","히트싱크 냉각 부족","리트랙션 과소","노즐 지름 큼"],answer:1},
+  {no:23,topic:"플랫폼",q:"모델 아래에 분리 가능한 바닥층을 깔아 부착을 돕는 옵션은?",choices:["스커트","브림","라프트","아이로닝"],answer:2},
+  {no:24,topic:"슬라이서",q:"전방향 강도 균형이 좋은 인필 패턴은?",choices:["라인","직삼각형","자이로이드","그리드"],answer:2},
+  {no:25,topic:"슬라이서",q:"상단 표면에 틈이 보일 때 1차 조치로 적절한 것은?",choices:["탑 레이어 수 증가","인필 15%→5%","벽 수 감소","팬 속도 0%"],answer:0},
+  {no:26,topic:"G/M",q:"메시/설정을 EEPROM에 저장하는 명령은?",choices:["G29","M500","M502","M851"],answer:1},
+  {no:27,topic:"G/M",q:"익스트루더를 상대 모드로 전환하는 명령은?",choices:["M82","M83","G90","G91"],answer:1},
+  {no:28,topic:"슬라이서",q:"벽 두께(퍼리미터)를 늘리면?",choices:["강도↓·시간↓","강도↑·시간↑","강도↑·시간↓","강도↓·시간↑"],answer:1},
+  {no:29,topic:"재료",q:"PETG에 대한 설명으로 옳은 것은?",choices:["PLA보다 내열·인성이 높다","ABS보다 수축이 크다","항상 브릿지성이 더 좋다","레진이다"],answer:0},
+  {no:30,topic:"재료",q:"TPU 출력 시 일반적인 주의로 옳은 것은?",choices:["속도↑·리트랙션↑","속도↓·리트랙션↓","속도↑·팬↑","온도↓"],answer:1},
+  {no:31,topic:"후처리",q:"SLA 출력물 세척에 흔히 쓰는 용제는?",choices:["에탄올","이소프로필알코올(IPA)","아세톤","톨루엔"],answer:1},
+  {no:32,topic:"후처리",q:"SLS 출력 후처리에서 먼저 수행할 작업은?",choices:["UV 경화","파우더 제거","아세톤 베이퍼","아닐링"],answer:1},
+  {no:33,topic:"플랫폼",q:"첫층 Z오프셋을 과도하게 음수로 주면?",choices:["부착 약화","노즐 긁힘 및 엘리펀츠 풋","레이어 분리","냉각 과다"],answer:1},
+  {no:34,topic:"슬라이서",q:"서포트 인터페이스 레이어 사용 목적은?",choices:["표면 거칠게","제거 난이도↑","접촉면 품질 향상","압출량 줄이기"],answer:2},
+  {no:35,topic:"슬라이서",q:"브릿지에서 유리한 설정은?",choices:["팬 강화","리트랙션 무조건 0","온도 크게↑","속도 크게↑"],answer:0},
+  {no:36,topic:"설계",q:"FDM에서 서포트 없이 가능한 일반적 오버행 각도는?",choices:["20°","30°","45°","80°"],answer:2},
+  {no:37,topic:"G/M",q:"지연(대기) 명령은?",choices:["G0","G4","G90","M84"],answer:1},
+  {no:38,topic:"G/M",q:"G92 E0 의 의미는?",choices:["원점 복귀","익스트루더 좌표 리셋","단위 인치","상대 좌표"],answer:1},
+  {no:39,topic:"재료",q:"가정용 FDM에서 더 보편적인 필라멘트 지름은?",choices:["1.75mm","2.85mm","3.50mm","5.00mm"],answer:0},
+  {no:40,topic:"재료",q:"PLA의 일반적 노즐 온도 범위로 가장 알맞은 것은?",choices:["120–150℃","150–170℃","180–200℃","230–260℃"],answer:2},
+  {no:41,topic:"플랫폼",q:"브림(Brim)의 설명으로 옳은 것은?",choices:["모델과 떨어져 프라임만 한다","모델 둘레에 얇게 깔아 접촉면을 늘린다","완전히 독립된 바닥층이다","상단을 다림질한다"],answer:1},
+  {no:42,topic:"슬라이서",q:"Combing 기능의 주된 효과는?",choices:["리트랙션 증가","외벽 넘어 횡단 이동 증가","내부로 경로 유도해 리트랙션/흔적 감소","Z-hop 자동"],answer:2},
+  {no:43,topic:"품질",q:"리트랙션 값을 과다하게 주면 생기기 쉬운 문제는?",choices:["과다 토출","언더익스트루전·빈칸","레이어 융착 과다","워프 증가"],answer:1},
+  {no:44,topic:"하드웨어",q:"스텝모터 전류가 너무 낮을 때 증상은?",choices:["레이어 시프트","핑 스트링","서포트 용해","노즐 막힘 감소"],answer:0},
+  {no:45,topic:"모델링/파일",q:"STL에서 노멀 방향이 뒤집히면?",choices:["슬라이서가 자동 보정해 항상 정상","출력 시간만 느려짐","슬라이싱 오류/빈 구간 발생","영향 없음"],answer:2},
+  {no:46,topic:"G/M",q:"설정 온도 도달을 기다리는 노즐 가열 명령은?",choices:["M104","M109","M140","M190"],answer:1},
+  {no:47,topic:"G/M",q:"베드 온도 도달을 기다리는 명령은?",choices:["M104","M109","M140","M190"],answer:3},
+  {no:48,topic:"G/M",q:"단위를 인치로 설정하는 G코드는?",choices:["G20","G21","G90","G91"],answer:0},
+  {no:49,topic:"G/M",q:"절대 좌표계 설정은?",choices:["G90","G91","M82","M83"],answer:0},
+  {no:50,topic:"안전",q:"ABS 출력 시 안전수칙으로 옳은 것은?",choices:["밀폐·환기 불필요","환기/공기정화 권장","노즐 온도 150℃ 이하","팬 항상 0%"],answer:1},
+  {no:51,topic:"안전",q:"레진 취급 시 기본 보호구는?",choices:["면장갑","보안경·니트릴 장갑","모자","슬리퍼"],answer:1},
+  {no:52,topic:"교정",q:"캘리브레이션 큐브(20mm)의 주목적은?",choices:["색상 보정","X/Y/Z 치수 검증","광택 향상","열변형 측정"],answer:1},
+  {no:53,topic:"품질",q:"Flow(Extrusion Multiplier)를 너무 높이면?",choices:["보이드 증가","표면 돌기·눌림","레이어 결합 약화","줄 늘어짐만 증가"],answer:1},
+  {no:54,topic:"슬라이서",q:"PLA의 일반적 냉각 전략은?",choices:["첫층부터 100% 팬","첫층은 낮게, 이후 충분한 냉각","항상 팬 0%","온도 크게 상승"],answer:1},
+  {no:55,topic:"슬라이서",q:"Coasting 기능의 목적은?",choices:["끝에서 압출을 조금 일찍 멈춰 누수 줄이기","첫층 높이 증가","인필 접촉 증가","Z축 흔들림 방지"],answer:0},
+  {no:56,topic:"슬라이서",q:"Z-hop의 효과로 옳은 것은?",choices:["브릿지 강화","여행 이동 중 표면 긁힘 감소","인필 품질 향상","노즐 가열 빠름"],answer:1},
+  {no:57,topic:"슬라이서",q:"단일 외벽으로 연속 적층하는 Vase 모드를 쓰기 좋은 대상은?",choices:["기어","박스 바디","화병·램프셰이드","브래킷"],answer:2},
+  {no:58,topic:"슬라이서",q:"Infill Overlap을 과다하게 주면?",choices:["외벽이 매끈","외벽이 밀려 솟음","브릿지 향상","층간 접합 약화만"],answer:1},
+  {no:59,topic:"슬라이서",q:"Seam(이음새) 위치를 ‘뒤로’ 고정하는 목적은?",choices:["냉각","숨김/미관 개선","강도 증가","시간 단축"],answer:1},
+  {no:60,topic:"슬라이서",q:"Adaptive Layers의 일반적 효과는?",choices:["세부 감소·시간 증가","세부 유지·시간 단축","항상 품질 저하","항상 시간 증가"],answer:1},
+];
+
+// 세트B: 다른 60문항 (개념·보기 변형)
+const setB = [
+  {no:1,topic:"공정",q:"DLP와 레이저식 SLA의 차이로 옳은 것은?",choices:["DLP는 레이저 스캐닝","DLP는 프로젝터로 한층을 한 번에 경화","SLA는 프로젝터 방식만 사용","둘 다 분말 융합"],answer:1},
+  {no:2,topic:"G/M",q:"필라멘트 교체 대화창을 여는 명령(펌웨어 지원 시)은?",choices:["M104","M84","M600","M221"],answer:2},
+  {no:3,topic:"G/M",q:"수동 리트랙션을 G코드로 표현할 때 적절한 설명은?",choices:["G1 E+ 값으로 뒤로 당김","G1 E- 값으로 뒤로 당김","G0 X,Y로 리트랙션","G92 X0로 초기화"],answer:1},
+  {no:4,topic:"품질",q:"엘리펀츠 풋의 원인으로 옳은 것은?",choices:["첫층 과도한 압착·베드 과열","리트랙션 과다","팬 과도","벽 두께 부족"],answer:0},
+  {no:5,topic:"플랫폼",q:"PEI시트에 PETG 출력 시 권장되는 대책은?",choices:["접착제 도포로 릴리즈층 만들기","베드 온도 최대치","브림 0선","팬 0% 고정"],answer:0},
+  {no:6,topic:"재료",q:"나일론에 대한 설명으로 옳은 것은?",choices:["흡습성이 낮다","건조 불필요","흡습성이 높아 건조 권장","항상 저온에서 출력"],answer:2},
+  {no:7,topic:"재료",q:"고온 고강도(PEEK/PEI 등) 출력에 필요한 조건으로 옳지 않은 것은?",choices:["노즐 400℃급·챔버 가열","표준 PTFE 핫엔드","특수 빌드플레이트","고온 베드"],answer:1},
+  {no:8,topic:"슬라이서",q:"Tree Support의 장점으로 옳은 것은?",choices:["접촉면 증가로 자국 증가","재료 사용 늘어남","표면 접촉 최소화로 자국 감소","시간 항상 증가"],answer:2},
+  {no:9,topic:"후처리",q:"레진의 ‘워터워셔블’ 표기 의미로 적절한 것은?",choices:["후경화 불필요","물로 세척 가능하지만 UV 후경화는 필요","인체에 무해","냄새 없음"],answer:1},
+  {no:10,topic:"공정",q:"HP MJF 공정의 핵심 특징은?",choices:["바인더로 접착 후 소결","분말층에 흡광제·퓨징제 분사 후 열 융합","액체 수지 레이저 경화","시트 적층"],answer:1},
+  {no:11,topic:"설계",q:"FDM 나사 체결용으로 적합한 방법은?",choices:["직접 탭 가공만 가능","열삽입 인서트 사용","나사 사용 불가","접착만 가능"],answer:1},
+  {no:12,topic:"설계",q:"FDM에서 ‘층 방향(적층 방향)’에 대한 설명으로 옳은 것은?",choices:["층과 평행한 하중에 강하다","층과 수직한 하중이 약하다","층 방향과 무관","모든 방향 동일"],answer:1},
+  {no:13,topic:"교정",q:"E-steps 교정 절차의 핵심은?",choices:["Z축 이동 100mm 측정","필라멘트 100mm 보내고 실제 이동거리 측정","베드 온도 100℃ 측정","팬 RPM 측정"],answer:1},
+  {no:14,topic:"G/M",q:"PID 오토튠에 쓰이는 명령은?",choices:["M221","M303","M851","M500"],answer:1},
+  {no:15,topic:"G/M",q:"Flow 비율을 조정하는 명령은?",choices:["M221","M106","M84","M900"],answer:0},
+  {no:16,topic:"G/M",q:"팬 속도 제어 명령은?",choices:["M104","M106/M107","M84","M140"],answer:1},
+  {no:17,topic:"G/M",q:"선형고급(Linear Advance)에 연관된 코드는?",choices:["M500","M851","M900","G92"],answer:2},
+  {no:18,topic:"G/M",q:"모터 해제 명령은?",choices:["M84","M82","G28","G29"],answer:0},
+  {no:19,topic:"슬라이서",q:"아이로닝(Ironing)의 효과로 옳은 것은?",choices:["하부면 강화","상단 솔리드면의 평활화","벽 결합 증가","시간 단축만"],answer:1},
+  {no:20,topic:"슬라이서",q:"고스트/링잉 감소에 직접 도움되는 설정은?",choices:["가속도/저크 낮추기","인필 밀도 증가","리트랙션 증가","벽 두께 감소"],answer:0},
+  {no:21,topic:"하드웨어",q:"보우덴 vs 다이렉트 드라이브 비교로 옳은 것은?",choices:["보우덴은 리트랙션 거리가 짧다","다이렉트는 유연재료에 유리","두 방식 차이 없음","보우덴이 항상 더 무겁다"],answer:1},
+  {no:22,topic:"슬라이서",q:"보우덴 방식에서 흔히 필요한 리트랙션 특성은?",choices:["거리 짧게","거리 길게","항상 0","속도 느리게만"],answer:1},
+  {no:23,topic:"설계",q:"FDM 결합부 간섭을 줄이기 위한 일반적 공차(클리어런스) 권장값은?",choices:["0.02–0.05mm","0.2–0.3mm","1–2mm","필요 없음"],answer:1},
+  {no:24,topic:"후처리",q:"콜드풀(Cold Pull)의 목적은?",choices:["노즐 열팽창 측정","노즐 내부 잔여물 제거","베드 평탄도 측정","팬 풍량 확인"],answer:1},
+  {no:25,topic:"플랫폼",q:"스커트(Skirt)의 목적은?",choices:["모델 고정 강화","노즐 프라임·압출 안정화","서포트 대체","상단 평활화"],answer:1},
+  {no:26,topic:"플랫폼",q:"브림·라프트·스커트의 매칭으로 옳은 것은?",choices:["브림=독립 바닥층","라프트=둘레에 얇은 링","스커트=모델과 분리된 1~3바퀴 프라임","모두 동일"],answer:2},
+  {no:27,topic:"하드웨어",q:"탄소섬유 함유 필라멘트 출력 시 권장 노즐은?",choices:["황동","알루미늄","경화강/루비","구리"],answer:2},
+  {no:28,topic:"품질",q:"XY 공진(링잉) 원인과 관련 깊은 요소는?",choices:["가속도/저크","인필 밀도","리트랙션","베드 온도"],answer:0},
+  {no:29,topic:"슬라이서",q:"작은 부품의 열 누적을 줄이는 방법은?",choices:["최소 층 시간 늘리기/쿨링 타워","팬 끄기","온도 올리기","Z-hop 증가"],answer:0},
+  {no:30,topic:"안전",q:"레진 보관 요령으로 적절하지 않은 것은?",choices:["불투명 용기","직사광선 차단","뚜껑 개방 보관","실온 보관"],answer:2},
+  {no:31,topic:"후처리",q:"SLS 출력물 내구성 향상을 위한 대표 처리 중 옳은 것은?",choices:["UV 후경화","침투 코팅/염색","아세톤 베이퍼","수세척만"],answer:1},
+  {no:32,topic:"설계",q:"브릿지 성능을 설계로 개선하는 방법은?",choices:["브릿지 길이 줄이기/아치형","벽 수 0","탑 레이어 0","브릿지 각도 0° 고정"],answer:0},
+  {no:33,topic:"재료",q:"ASA 재료 특징으로 옳은 것은?",choices:["실내 내후성 약함","ABS 대비 자외선 내성↑","내열 낮음","유연 재료"],answer:1},
+  {no:34,topic:"G/M",q:"현재 위치를 원점처럼 재설정하는 명령은?",choices:["G28","G92","M500","M851"],answer:1},
+  {no:35,topic:"G/M",q:"Z 오프셋을 저장하는 명령 조합으로 옳은 것은?",choices:["M851 설정 후 M500 저장","M500 후 M851","G29 후 M84","G90 후 M84"],answer:0},
+  {no:36,topic:"모델링/파일",q:"비매니폴드(Non-manifold)의 예가 아닌 것은?",choices:["공유되지 않은 에지","겹치는 면/자기 교차","면의 두께가 있는 솔리드","구멍 뚫린 메시"],answer:2},
+  {no:37,topic:"재료",q:"PC(폴리카보네이트) 출력 특성으로 옳은 것은?",choices:["저온·쉬움","고온·수축·챔버 유리","유연하고 끈적임","레진"],answer:1},
+  {no:38,topic:"공정",q:"바인더 제팅의 특징은?",choices:["분말을 레이저로 용융","액체 바인더로 분말 접착 후 소결/경화","시트 적층","수지 경화"],answer:1},
+  {no:39,topic:"슬라이서",q:"서포트 제거성을 높이는 파라미터는?",choices:["서포트 Z-거리 증가","서포트 밀도 100%","인터페이스 0","서포트 팬 0%"],answer:0},
+  {no:40,topic:"안전",q:"노즐 청소 시 안전하지 않은 방법은?",choices:["가열 중 금속 솔 직접 문지르기","콜드풀","노즐 교체","브라스 브러시 사용 시 전원 차단"],answer:0},
+  {no:41,topic:"하드웨어",q:"듀얼 노즐 장비에서 혼색/누수를 줄이는 방법은?",choices:["와이프 타워/오즈 실드 사용","팬 0%","Z-hop 0","리트랙션 0"],answer:0},
+  {no:42,topic:"슬라이서",q:"탑/바텀 레이어 수를 늘리면 주된 효과는?",choices:["강도↓","상하 표면 밀폐·매끈","시간 단축","리트랙션 감소"],answer:1},
+  {no:43,topic:"교정",q:"X/Y 이중벽 겹침이 심할 때 1차 확인은?",choices:["E-steps","차동기어","타이밍 벨트 장력/풀리 고정","베드 온도"],answer:2},
+  {no:44,topic:"하드웨어",q:"써멀런(thermal runaway) 보호의 목적은?",choices:["정전 시 재시작","온도 제어 이상시 가열 차단","속도 제어","팬 속도 고정"],answer:1},
+  {no:45,topic:"G/M",q:"G1 X100 F600 의 의미는?",choices:["X축 100mm로 절대 이동, 피드 600mm/min","원점 복귀","상대 이동","팬 제어"],answer:0},
+  {no:46,topic:"슬라이서",q:"외벽 속도를 낮추는 주된 이유는?",choices:["내부 과다 충전","표면 품질 향상","시간 단축","강도 감소"],answer:1},
+  {no:47,topic:"슬라이서",q:"퍼지 라인(프라임 라인)의 목적은?",choices:["상단 평활화","첫층 전 압출 안정화","브릿지 향상","팬 보정"],answer:1},
+  {no:48,topic:"설계",q:"내부 나사 3D프린트 시 권장되는 설계 팁은?",choices:["정확 치수 그대로","약간 크게/탭 여유","작게 설계","무관"],answer:1},
+  {no:49,topic:"후처리",q:"PLA 표면을 매끈하게 하는 방법으로 적절하지 않은 것은?",choices:["사포→서페이서 프라이머→도장","화학적 아세톤 베이퍼","퍼티로 메움","스프레이 프라이머 사용"],answer:1},
+  {no:50,topic:"재료",q:"카본필이 섞인 PLA-CF의 특징은?",choices:["유연성 증가","마모↑·강성↑·노즐 마모 주의","온도 항상 낮음","투명"],answer:1},
+  {no:51,topic:"슬라이서",q:"라인 폭(Line Width)을 노즐 지름보다 약간 크게 설정하는 이유는?",choices:["시간 증가만","접합 향상과 간격 메움","강도 감소","의미 없음"],answer:1},
+  {no:52,topic:"재료",q:"HIPS는 듀얼에서 어떤 용도로 많이 쓰이는가?",choices:["강도 보강","서포트(리모너)로 용해 제거","색상 조합","탄성 부품"],answer:1},
+  {no:53,topic:"하드웨어",q:"Glass 베드의 장점으로 옳은 것은?",choices:["무게 가벼움","평탄도 우수·표면 매끈","접착 매우 강함 항상","휨이 심함"],answer:1},
+  {no:54,topic:"공정",q:"SLS에서 ‘케이크 쿨링’의 목적은?",choices:["속도 증가","열변형·뒤틀림 감소","표면 거칠게","색상 균일화"],answer:1},
+  {no:55,topic:"G/M",q:"현재 장치의 절대/상대 좌표 모드를 전환하는 코드는?",choices:["G90/G91","M90/M91","G20/G21","M20/M21"],answer:0},
+  {no:56,topic:"슬라이서",q:"외벽 먼저 vs 내부 먼저 인쇄 선택의 주된 트레이드오프는?",choices:["품질 vs 접합","시간 vs 온도","팬 vs 속도","무관"],answer:0},
+  {no:57,topic:"재료",q:"PP(폴리프로필렌) 출력 특징으로 옳은 것은?",choices:["부착 쉬움","화학접착·전용시트 필요","흡습 심함","낮은 수축"],answer:1},
+  {no:58,topic:"교정",q:"베드 평면이 기계적으로 틀어진 경우 효과적인 보정은?",choices:["Z오프셋만 조정","메시 레벨링 사용","인필 100%","팬 속도 증가"],answer:1},
+  {no:59,topic:"안전",q:"수지 경화기(큐어링) 사용 시 주의는?",choices:["맨손 출입","UV 차단 커버·시간 준수","강한 열 가열","물에 담그기"],answer:1},
+  {no:60,topic:"하드웨어",q:"노즐 교체 시 올바른 절차에 가까운 것은?",choices:["차가운 상태에서 강하게 비틀기","가열 후 고정 렌치로 히터블럭 지지하고 교체","히터선 잡고 돌리기","무리한 토크"],answer:1},
+];
+
+// ============ 상태 ============
+let currentSetKey = 'A';
+let questions = JSON.parse(JSON.stringify(setA)); // deep copy
+let answers = {}; // {index: choiceIndex}
+let filteredIndices = null; // for retry wrong mode
+
+// ============ 렌더링 ============
+const grid = document.getElementById('grid');
+const resultBox = document.getElementById('result');
+const statusEl = document.getElementById('status');
+const setPicker = document.getElementById('setPicker');
+const btnScore = document.getElementById('btnScore');
+const btnRetryWrong = document.getElementById('btnRetryWrong');
+const btnReset = document.getElementById('btnReset');
+
+function render(indices=null){
+  const idxs = indices ?? questions.map((_,i)=>i);
+  grid.innerHTML = idxs.map(i => {
+    const item = questions[i];
+    const selected = (i in answers) ? answers[i] : -1;
+    return `
+      <article class="card" data-idx="${i}">
+        <div class="qhead">
+          <span class="no">Q${String(i+1).padStart(2,'0')}</span>
+          <span class="topic">${item.topic}</span>
+        </div>
+        <div class="question">${item.q}</div>
+        <ul class="choices">
+          ${item.choices.map((c,ci)=>`
+            <li class="${selected===ci?'selected':''}">
+              <label>
+                <input type="radio" name="q${i}" ${selected===ci?'checked':''} value="${ci}">
+                <span>${String.fromCharCode(65+ci)}. ${c}</span>
+              </label>
+            </li>
+          `).join('')}
+        </ul>
+        <div class="explain"></div>
+      </article>
+    `;
+  }).join('');
+  attachChoiceHandlers();
+  updateStatus();
+}
+function attachChoiceHandlers(){
+  grid.querySelectorAll('input[type=radio]').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      const name = e.target.getAttribute('name'); // q{idx}
+      const idx = parseInt(name.slice(1),10);
+      const val = parseInt(e.target.value,10);
+      answers[idx] = val;
+      // toggle selected styling
+      e.target.closest('.choices').querySelectorAll('li').forEach(li=>li.classList.remove('selected'));
+      e.target.closest('li').classList.add('selected');
+      updateStatus();
+    });
+  });
+}
+function updateStatus(){
+  const answered = Object.keys(answers).length;
+  statusEl.textContent = `진행: ${answered} / 60`;
+}
+
+// ============ 채점 ============
+function score(){
+  // ensure all answered
+  const unanswered = [];
+  questions.forEach((_,i)=>{ if(!(i in answers)) unanswered.push(i); });
+  if(unanswered.length>0){
+    alert(`아직 ${unanswered.length}문항이 남았습니다. (첫 번째 미응답: Q${(unanswered[0]+1)})`);
+    return null;
+  }
+  let correct=0;
+  let wrongIdx=[];
+  questions.forEach((q,i)=>{
+    if(answers[i]===q.answer){ correct++; }
+    else { wrongIdx.push(i); }
+  });
+  const percent = Math.round((correct/60)*100);
+  const pass = percent>=60; // 60점 이상 합격
+  // 결과 표시
+  resultBox.classList.remove('hidden');
+  resultBox.innerHTML = `
+    <div class="headrow">
+      <span class="tag">채점 결과</span>
+      <div class="score">${correct} / 60 정답 (${percent}점)</div>
+      <div class="${pass?'pass':'fail'}" style="font-weight:900;margin-left:auto">${pass?'합격 🎉':'불합격'}</div>
+    </div>
+    <div class="info">※ 합격 기준: 총점 <b>60점 이상</b> (정답 36문항 이상)</div>
+  `;
+  // 오답 다시 풀기 활성화
+  btnRetryWrong.disabled = wrongIdx.length===0;
+  filteredIndices = wrongIdx.length ? wrongIdx : null;
+  // 카드 스타일 업데이트(정답은 비공개, 선택 상태만 표시)
+  grid.querySelectorAll('.card').forEach(card=>card.classList.remove('correct','wrong'));
+  questions.forEach((q,i)=>{
+    const card = grid.querySelector(`.card[data-idx="${i}"]`);
+    const cls = (answers[i]===q.answer)?'correct':'wrong';
+    card.classList.add(cls);
+  });
+  // 세트B 오픈
+  if(currentSetKey==='A'){
+    setPicker.options[1].disabled=false;
+  }
+  return {correct,percent,wrongIdx,pass};
+}
+
+// 오답만 다시 풀기
+function retryWrong(){
+  if(!filteredIndices || filteredIndices.length===0){
+    alert("오답 문항이 없습니다.");
+    return;
+  }
+  // 오답 문항의 선택을 초기화
+  filteredIndices.forEach(i=>{ delete answers[i]; });
+  render(filteredIndices);
+  resultBox.classList.add('hidden');
+  btnRetryWrong.disabled = true;
+}
+
+// 전체 초기화
+function resetAll(){
+  answers = {};
+  filteredIndices = null;
+  resultBox.classList.add('hidden');
+  grid.querySelectorAll('.card').forEach(c=>c.classList.remove('correct','wrong'));
+  render();
+}
+
+// 세트 전환
+function switchSet(key){
+  currentSetKey = key;
+  questions = JSON.parse(JSON.stringify(key==='A'?setA:setB));
+  answers = {};
+  filteredIndices = null;
+  resultBox.classList.add('hidden');
+  btnRetryWrong.disabled=true;
+  render();
+}
+
+btnScore.addEventListener('click', ()=>score());
+btnRetryWrong.addEventListener('click', ()=>retryWrong());
+btnReset.addEventListener('click', ()=>resetAll());
+setPicker.addEventListener('change', e=>{
+  const v = e.target.value;
+  if(v==='B' && e.target.options[1].disabled){
+    alert("세트 A를 먼저 완료(모든 문항 응답 후 채점)하세요.");
+    setPicker.value='A';
+    return;
+  }
+  switchSet(v);
+});
+
+// 최초 렌더
+render();
+</script>
+</body>
+</html>
